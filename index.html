@@ -18,14 +18,56 @@
         .shake { 
             animation: shake 0.4s ease-in-out; 
         }
-        /* Hide number input spinners for a cleaner look */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        /* Large touch targets without double-tap zoom while entering an answer. */
+        .keypad-key {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 2px;
+            min-height: 52px;
+            border-radius: 1rem;
+            font-weight: 700;
+            touch-action: manipulation;
+            user-select: none;
+            transition: background-color 0.15s, transform 0.1s;
         }
-        input[type=number] {
-            -moz-appearance: textfield;
+        .keypad-key[data-key] {
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 1.5rem;
+        }
+        @media (hover: hover) {
+            .keypad-key[data-key]:hover:not(:disabled) { background: #e2e8f0; }
+        }
+        .keypad-key:active:not(:disabled) { transform: scale(0.96); }
+        .keypad-key:focus-visible { outline: 3px solid #818cf8; outline-offset: 2px; }
+        .keypad-key:disabled { opacity: 0.45; cursor: default; }
+        .ui-icon {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
+        }
+        .keypad-key .ui-icon { width: 26px; height: 26px; }
+        .control-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            min-height: 44px;
+            flex-shrink: 0;
+        }
+        .control-button:focus-visible { outline: 3px solid #818cf8; outline-offset: 2px; }
+        #checkLabel { font-size: 12px; line-height: 16px; }
+        #answer:disabled {
+            opacity: 1;
+            -webkit-text-fill-color: #4f46e5;
         }
         /* Smooth progress bar transition */
         .progress-transition {
@@ -33,30 +75,26 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-50 to-blue-100 min-h-[100dvh] flex items-start justify-center pt-8 sm:pt-20 p-4 font-sans text-slate-800 selection:bg-blue-200">
+<body class="bg-gradient-to-br from-indigo-50 to-blue-100 min-h-[100dvh] flex items-start justify-center p-3 sm:p-4 sm:pt-20 font-sans text-slate-800 selection:bg-blue-200">
 
-    <div class="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-sm w-full text-center relative overflow-hidden border border-slate-100">
+    <div class="bg-white rounded-3xl shadow-2xl p-5 sm:p-8 max-w-sm w-full text-center relative overflow-hidden border border-slate-100">
         
         <!-- Header Section -->
-        <h1 class="text-2xl font-extrabold text-slate-700 mb-6 tracking-tight">Einmaleins Training</h1>
+        <h1 class="text-2xl font-extrabold text-slate-700 mb-4 sm:mb-6 tracking-tight">Einmaleins Training</h1>
         
         <div class="flex justify-between items-center mb-4 space-x-2">
-            <span id="progressIndicator" class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full">
+            <span id="progressIndicator" class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 sm:px-3 py-1.5 rounded-full whitespace-nowrap">
                 Bereit?
             </span>
-            <div class="flex space-x-2">
-                <span id="mistakeDisplay" class="text-sm font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-full transition-all duration-300 flex items-center">
+            <div class="flex items-center space-x-1 sm:space-x-2">
+                <span id="mistakeDisplay" class="text-sm font-bold text-rose-600 bg-rose-50 px-2 sm:px-3 py-1.5 rounded-full transition-all duration-300 flex items-center whitespace-nowrap">
                     Fehler: 0
                 </span>
-                <button id="resetBtn" class="flex items-center justify-center p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors" title="Neustart">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                    </svg>
+                <button id="resetBtn" aria-label="Neustart" class="control-button flex items-center justify-center p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors" title="Neustart">
+                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10a9 9 0 1 1 2.7 8M3 4v6h6" /></svg>
                 </button>
-                <button id="openSettingsBtn" class="flex items-center justify-center p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors" title="Einstellungen">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-                    </svg>
+                <button id="openSettingsBtn" aria-label="Einstellungen" class="control-button flex items-center justify-center p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors" title="Einstellungen">
+                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7h4m4 0h10M3 17h10m4 0h4" /><circle cx="9" cy="7" r="2" /><circle cx="15" cy="17" r="2" /></svg>
                 </button>
             </div>
         </div>
@@ -73,10 +111,8 @@
                 <button id="startBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-2xl text-lg shadow-lg transition-transform active:scale-95">
                     Starten
                 </button>
-                <button id="startSettingsBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-6 rounded-2xl text-base transition-colors flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-                    </svg>
+                <button id="startSettingsBtn" aria-label="Einstellungen" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-6 rounded-2xl text-base transition-colors flex items-center justify-center">
+                    <svg class="ui-icon mr-1.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7h4m4 0h10M3 17h10m4 0h4" /><circle cx="9" cy="7" r="2" /><circle cx="15" cy="17" r="2" /></svg>
                     Einstellungen
                 </button>
             </div>
@@ -86,10 +122,8 @@
         <div id="settingsOverlay" class="absolute inset-0 bg-white z-20 hidden flex-col p-6 rounded-3xl overflow-y-auto text-left">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-slate-800">Einstellungen</h2>
-                <button id="closeSettingsBtn" class="text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                <button id="closeSettingsBtn" aria-label="Einstellungen schließen" class="control-button text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors">
+                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
                 </button>
             </div>
             
@@ -136,24 +170,44 @@
         <!-- Input and Controls -->
         <div class="space-y-4">
             <div class="relative w-32 mx-auto">
-                <input type="number" id="answer" autofocus
+                <input type="text" id="answer" readonly inputmode="none" maxlength="3" aria-label="Ergebnis"
                     class="w-full text-center text-4xl font-bold text-indigo-600 border-b-4 border-slate-200 focus:border-indigo-500 focus:outline-none bg-transparent pb-2 transition-colors placeholder-slate-300"
                     placeholder="?" autocomplete="off">
             </div>
             
             <!-- Feedback Message Area -->
             <div class="h-6 flex items-center justify-center">
-                <p id="feedback" class="text-base font-bold opacity-0 transition-opacity duration-200"></p>
+                <p id="feedback" role="status" class="text-base font-bold opacity-0 transition-opacity duration-200"></p>
             </div>
 
-            <!-- Visual Aid Container (Multiplication Table Grid) -->
-            <div id="visualAidContainer" class="flex justify-center"></div>
+            <!-- Embedded Keypad -->
+            <div id="keypad" role="group" aria-label="Zifferntastatur" class="grid grid-cols-3 gap-2">
+                <button type="button" class="keypad-key" data-key="1">1</button>
+                <button type="button" class="keypad-key" data-key="2">2</button>
+                <button type="button" class="keypad-key" data-key="3">3</button>
+                <button type="button" class="keypad-key" data-key="4">4</button>
+                <button type="button" class="keypad-key" data-key="5">5</button>
+                <button type="button" class="keypad-key" data-key="6">6</button>
+                <button type="button" class="keypad-key" data-key="7">7</button>
+                <button type="button" class="keypad-key" data-key="8">8</button>
+                <button type="button" class="keypad-key" data-key="9">9</button>
+                <button type="button" class="keypad-key" data-key="Backspace" aria-label="Letzte Ziffer löschen" title="Letzte Ziffer löschen">
+                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M9 5h11a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-7-7 7-7Z M12 9l6 6m0-6-6 6" />
+                    </svg>
+                </button>
+                <button type="button" class="keypad-key" data-key="0">0</button>
+                <button type="button" id="checkBtn" title="Enter"
+                    class="keypad-key bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm shadow-md">
+                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path id="checkIcon" d="M20 5v7a3 3 0 0 1-3 3H4m5-5-5 5 5 5" />
+                    </svg>
+                    <span id="checkLabel">Prüfen</span>
+                </button>
+            </div>
 
-            <!-- Submit Button -->
-            <button id="checkBtn"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl text-xl shadow-[0_8px_16px_rgba(79,70,229,0.3)] hover:shadow-[0_12px_20px_rgba(79,70,229,0.4)] transition-all transform active:scale-[0.98]">
-                Prüfen
-            </button>
+            <!-- Keep the keypad in place when showing the multiplication table. -->
+            <div id="visualAidContainer" class="flex justify-center"></div>
         </div>
     </div>
 
@@ -216,6 +270,10 @@
         const answerEl = document.getElementById('answer');
         const feedbackEl = document.getElementById('feedback');
         const checkBtn = document.getElementById('checkBtn');
+        const checkLabel = document.getElementById('checkLabel');
+        const checkIcon = document.getElementById('checkIcon');
+        const keypad = document.getElementById('keypad');
+        const entryKeys = keypad.querySelectorAll('[data-key]');
         const mistakeDisplay = document.getElementById('mistakeDisplay');
         const progressIndicator = document.getElementById('progressIndicator');
         const countdownBar = document.getElementById('countdownBar');
@@ -237,6 +295,34 @@
         const tableWarning = document.getElementById('tableWarning');
         const statsChart = document.getElementById('statsChart');
         const resetStatsBtn = document.getElementById('resetStatsBtn');
+
+        function isGameVisible() {
+            return startOverlay.classList.contains('hidden') && settingsOverlay.classList.contains('hidden');
+        }
+
+        function setCheckButton(state) {
+            const states = {
+                check: { label: 'Prüfen', icon: 'M20 5v7a3 3 0 0 1-3 3H4m5-5-5 5 5 5' },
+                next: { label: 'Weiter', icon: 'M4 12h16m-7-7 7 7-7 7' },
+                success: { label: 'Super!', icon: 'm5 12 4 4L19 6' }
+            };
+            checkLabel.textContent = states[state].label;
+            checkIcon.setAttribute('d', states[state].icon);
+        }
+
+        function setAnswerEntryEnabled(enabled) {
+            answerEl.disabled = !enabled;
+            entryKeys.forEach(button => { button.disabled = !enabled; });
+        }
+
+        function editAnswer(key) {
+            if (!isGameVisible() || isWaitingForNext || answerEl.disabled) return;
+            if (key === 'Backspace' || key === 'Delete') {
+                answerEl.value = answerEl.value.slice(0, -1);
+            } else if (/^[0-9]$/.test(key) && answerEl.value.length < answerEl.maxLength) {
+                answerEl.value += key;
+            }
+        }
 
         function updateMistakesUI() {
             mistakeDisplay.textContent = `Fehler: ${mistakes}`;
@@ -290,23 +376,11 @@
             generateQuestion();
         }
 
-        function endGame(success) {
-            stopCountdown();
-            
-            endTitle.textContent = success ? "Geschafft!" : "Zeit abgelaufen!";
-            endTitle.className = success ? "text-2xl font-bold text-emerald-600 mb-2" : "text-2xl font-bold text-rose-600 mb-2";
-            
-            endDesc.innerHTML = `Du hast <b>${questionCount} / ${TOTAL_QUESTIONS}</b> gelöst.<br>
-                                 Fehler gemacht: <b>${mistakes}</b>`;
-            startBtn.textContent = "Nochmal spielen";
-            startOverlay.classList.remove('hidden');
-        }
-
         function handleTimeOut() {
             if (isWaitingForNext) return;
             isWaitingForNext = true;
             waitingForManualNext = true;
-            answerEl.disabled = true;
+            setAnswerEntryEnabled(false);
             
             mistakes++;
             updateMistakesUI();
@@ -316,7 +390,7 @@
             feedbackEl.className = 'text-base font-bold text-rose-500';
             feedbackEl.style.opacity = '1';
             
-            checkBtn.textContent = 'Weiter';
+            setCheckButton('next');
             checkBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
             checkBtn.classList.add('bg-slate-500', 'hover:bg-slate-600');
             checkBtn.focus();
@@ -355,10 +429,10 @@
             countdownBar.className = 'h-2.5 rounded-full progress-transition w-full bg-emerald-500';
 
             answerEl.value = '';
-            answerEl.disabled = false;
-            answerEl.focus();
+            setAnswerEntryEnabled(true);
+            answerEl.focus({ preventScroll: true });
             feedbackEl.style.opacity = '0';
-            checkBtn.textContent = 'Prüfen';
+            setCheckButton('check');
             checkBtn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600', 'bg-slate-500', 'hover:bg-slate-600');
             checkBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
 
@@ -414,6 +488,7 @@
         }
 
         function checkAnswer() {
+            if (!isGameVisible()) return;
             if (waitingForManualNext) {
                 waitingForManualNext = false;
                 if (questionCount >= TOTAL_QUESTIONS) {
@@ -435,14 +510,14 @@
 
             if (userAnswer === correctAnswer) {
                 isWaitingForNext = true;
-                answerEl.disabled = true;
+                setAnswerEntryEnabled(false);
                 stopCountdown();
                 
                 feedbackEl.textContent = 'Richtig!';
                 feedbackEl.className = 'text-base font-bold text-emerald-600';
                 feedbackEl.style.opacity = '1';
                 
-                checkBtn.textContent = 'Super!';
+                setCheckButton('success');
                 checkBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
                 checkBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
                 
@@ -454,14 +529,14 @@
                 
                 isWaitingForNext = true;
                 waitingForManualNext = true;
-                answerEl.disabled = true;
+                setAnswerEntryEnabled(false);
                 stopCountdown();
                 
                 feedbackEl.textContent = `Falsch! Lösung: ${correctAnswer}`;
                 feedbackEl.className = 'text-base font-bold text-rose-500';
                 feedbackEl.style.opacity = '1';
                 
-                checkBtn.textContent = 'Weiter';
+                setCheckButton('next');
                 checkBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
                 checkBtn.classList.add('bg-slate-500', 'hover:bg-slate-600');
                 checkBtn.focus();
@@ -478,15 +553,24 @@
         startBtn.addEventListener('click', startGame);
         resetBtn.addEventListener('click', startGame);
         
-        answerEl.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                checkAnswer();
-            }
+        keypad.addEventListener('click', (e) => {
+            const key = e.target.closest('[data-key]');
+            if (key) editAnswer(key.dataset.key);
         });
 
-        document.querySelector('.bg-white').addEventListener('click', () => {
-            if (!isWaitingForNext && startOverlay.classList.contains('hidden') && settingsOverlay.classList.contains('hidden')) {
-                answerEl.focus();
+        // A physical keyboard still works, including after clicking keypad buttons.
+        document.addEventListener('keydown', (e) => {
+            if (!isGameVisible() || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+            const target = e.target;
+            if (target !== answerEl && !keypad.contains(target) &&
+                target.closest('button, input, select, textarea, a, [contenteditable]')) return;
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!e.repeat) checkAnswer();
+            } else if (/^[0-9]$/.test(e.key) || e.key === 'Backspace' || e.key === 'Delete') {
+                e.preventDefault();
+                editAnswer(e.key);
             }
         });
 
